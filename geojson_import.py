@@ -161,6 +161,8 @@ def create_mysql_struct_from_dict(sql_dict:dict, sql_file):
 
         sql_file.write(")\n")
 
+    # TODO: Loop through all not _struct lists and create data.
+
 # A function that prints the keys of every dict in a NOT processed JSON dictionary
 def print_dict_as_tables(f_input:dict, tableName:str = "main"):
 
@@ -216,7 +218,6 @@ json_content = python_dict_list_list_convert(json_content)
 print("Mapping SQL structure")
 sql_dict = create_sql_dict_from_json(json_content, "main")
 print_sql_struct(sql_dict)
-
 
 
 print("Creating Output")
