@@ -1,6 +1,10 @@
 # JSON-to-SQL
 A Json to SQL converter designed for continuous updating data. 
 
+# Sample Execution
+`python3 geojson_import.py data.json`
+
+
 # Command Line parameters
 - input json file name
 
