@@ -18,15 +18,12 @@ class SQL_col:
         elif self.foreign: keyType = "Foreign, Table "+ self.foreignTable
         return f'Name: {self.name} | {self.Type} | {keyType}'
 
-
 # A helper function that checks if a dictionary contains a dictionary
 def dict_contains_dict(f_input:dict):
     for x in f_input:
         if(type(f_input[x]) is dict): 
             return True
     return False
-
-
 
 # A helper function that checks if every object in a list has the same structure
 def list_struct_check(f_input:list):
@@ -82,14 +79,30 @@ def python_dict_list_list_convert(f_input:dict):
 def create_sql_dict_from_json(f_input:dict, tableName:str = "main", foreign_key:SQL_col = None, sql_dict:dict = dict()):
     sql_dict[tableName + "_struct"] = []
 
-    # This section defines primary and foreign keys
-    # TODO: Prompt for primary key, if none is chosen, create one
-    primary = SQL_col(tableName+"_pk", int, True)
-    sql_dict[tableName + "_struct"].append(primary)
-    if foreign_key is not None: sql_dict[tableName + "_struct"].append(foreign_key)
-    
+    # This section defines primary and child foreign keys
+    primaryKeyChoice = ["~None~"]
+    for key in f_input:
+        if type(f_input[key]) is not list:
+            primaryKeyChoice.append(key)
+    questions = [
+        inquirer.List(
+            "pk",
+            message="What is the primary key for the "+tableName+" table?",
+            choices=primaryKeyChoice
+        )
+    ]
+    primaryKeyChosen = inquirer.prompt(questions)
+
+    if primaryKeyChosen["pk"] != "~None~":
+        pkName = primaryKeyChosen["pk"]
+        pkType = type(f_input[pkName])
+        child_foreign_key = SQL_col(pkName, pkType, False, tableName)
+    else: 
+        sql_dict[tableName + "_struct"].append(SQL_col(tableName+'_pk', int, True))
+        child_foreign_key = SQL_col(tableName+'_pk', int, False, tableName)
+
     # This section creates table structure based on first dict in every list
-    child_foreign_key = SQL_col(primary.name, primary.Type, False, tableName)
+    if foreign_key is not None: sql_dict[tableName + "_struct"].append(foreign_key)
     for key in f_input:
         if type(f_input[key]) is list:
             if type(f_input[key][0]) is dict:
@@ -97,27 +110,38 @@ def create_sql_dict_from_json(f_input:dict, tableName:str = "main", foreign_key:
             else:
                 print("Error, all lists must be converted into dictionaries, ignoring this column, sorry, no further debug information :P")
         else:
-            sql_dict[tableName + "_struct"].append(SQL_col(key, type(f_input[key])))
+            sql_dict[tableName + "_struct"].append(SQL_col(
+                key, 
+                type(f_input[key]), 
+                True if key == primaryKeyChosen["pk"] else False
+            ))
 
     return sql_dict
 
 # This Function created SQL dict data given SQL structure and processed JSON input
-# TODO: FINISH PRIMARY KEY SELECTION BEFORE TESTING THIS FUNCTION!!!
+# TODO: This Function is broken?
 def create_sql_data_from_json(f_input:dict, sql_dict:dict, tableName:str = "main", foreign_key:str = None, foreign_value=None):
     
     # Load the structure
     if tableName+"_struct" not in sql_dict:
-        print("Error, table structure not found")
-        return
+        print("Error, table structure not found, Skipping Row")
+        print(tableName+"_struct")
+        print(f_input)
+        print()
+        return sql_dict
     tableStruct = sql_dict[tableName+"_struct"]
 
     # Create data sector if not exists
     if tableName not in sql_dict: sql_dict[tableName] = []
     
-    # Identify primary key
-    primaryKey = ""
+    # Identify primary key/Value
+    primaryKey = None
+    primaryValue = None
     for col in tableStruct:
         if col.primary: primaryKey = col.name
+        
+    if primaryKey in f_input.keys():
+        primaryValue = f_input[primaryKey]
 
     # Create new data insert and append foreign key values
     newEntry = {}
@@ -129,7 +153,7 @@ def create_sql_data_from_json(f_input:dict, sql_dict:dict, tableName:str = "main
         if type(f_input[key]) is list:
             if type(f_input[key][0] is dict):
                 for x in f_input[key]:
-                    sql_dict = create_sql_data_from_json(x, sql_dict, key, primaryKey, f_input[primaryKey])
+                    sql_dict = create_sql_data_from_json(x, sql_dict, key, primaryKey, primaryValue)
             else: print("ERROR all lists of lists must be converted to lists of dicts")
         else:
             newEntry[key] = f_input[key]
@@ -217,14 +241,14 @@ json_content = python_dict_list_list_convert(json_content)
 
 print("Mapping SQL structure")
 sql_dict = create_sql_dict_from_json(json_content, "main")
+sql_dict = create_sql_data_from_json(json_content, sql_dict, "main")
 print_sql_struct(sql_dict)
 
 
-print("Creating Output")
-sql_out = open("output.sql", "w")
-create_mysql_struct_from_dict(sql_dict, sql_out)
-sql_out.close()
-# print("Output created")
+# print("Creating Output")
+# sql_out = open("output.sql", "w")
+# create_mysql_struct_from_dict(sql_dict, sql_out)
+# sql_out.close()
 
 
 
