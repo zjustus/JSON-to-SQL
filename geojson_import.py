@@ -56,6 +56,24 @@ def python_dict_flatten(f_input:dict):
         f_input = output
     return output
 
+def python_json_standardize(f_input:dict, sample=None):
+    if sample is not None:
+        if type(sample) is dict:
+            print("TODO: Sample is dict")
+        else:
+            print("TODO: sample is other")
+
+    for key in f_input:
+        if type(f_input[key]) is list:
+            for i in range(len(f_input[key])):
+                print("TODO!")
+                # check if the structure of index 0 matches the structure of the rest
+        elif type(f_input[key] is dict):
+            for i in f_input[key]:
+                python_json_standardize(f_input[key][i], f_input[key][0])
+                
+                
+
 # A function that converts all lists of lists into lists of dicts
 # TODO: add catch for lists of regular data
 def python_dict_list_list_convert(f_input:dict):
@@ -164,11 +182,13 @@ def create_sql_data_from_json(f_input:dict, sql_dict:dict, tableName:str = "main
 
 # TODO: Extend this to also create the data
 def create_mysql_struct_from_dict(sql_dict:dict, sql_file):
+
+    # Part 1, create tables
     tables = [val for val in sql_dict.keys() if "_struct" in val]
     for table in tables:
         table_name = table.replace("_struct","")
         sql_file.write("CREATE TABLE "+table_name+"(")
-        print("Creating table ", table_name)
+        print("Creating table", table_name)
         i = 0
         for col in sql_dict[table]:
             i += 1
@@ -183,7 +203,39 @@ def create_mysql_struct_from_dict(sql_dict:dict, sql_file):
             
             if(len(sql_dict[table]) != i): sql_file.write(", ")
 
-        sql_file.write(")\n")
+        sql_file.write(");\n")
+    sql_file.write("\n")
+
+    # Part 2, create data
+    tables = [val for val in sql_dict.keys() if "_struct" not in val]
+    for table in tables:
+        print("Inserting values into", table, "table")
+
+        # Create insert structure
+        sql_file.write("INSERT INTO "+table+" (")
+        i = 0
+        for col in sql_dict[table+"_struct"]:
+            i += 1
+            sql_file.write(col.name+"")
+            if(len(sql_dict[table+"_struct"]) != i): sql_file.write(", ")
+        sql_file.write(") ")
+
+        # Insert the values
+        sql_file.write("VALUES\n")
+        i = 0
+        for row in sql_dict[table]:
+            i+=1
+            j = 0
+            sql_file.write("(")
+            for k in row:
+                j += 1
+                sql_file.write(k)
+                if j != len(row): sql_file.write(", ")
+            if i != len(sql_dict[table]): sql_file.write("),")
+            else: sql_file.write(");")
+            sql_file.write("\n\n")
+
+
 
     # TODO: Loop through all not _struct lists and create data.
 
@@ -236,6 +288,9 @@ json_file.close()
 print("Flattening JSON")
 json_content = python_dict_flatten(json_content)
 
+# print("Converting non standard data to strings")
+# json_content = python_json_standardize(json_content)
+
 print("Converting lists of lists to lists of dicts")
 json_content = python_dict_list_list_convert(json_content)
 
@@ -245,10 +300,10 @@ sql_dict = create_sql_data_from_json(json_content, sql_dict, "main")
 print_sql_struct(sql_dict)
 
 
-# print("Creating Output")
-# sql_out = open("output.sql", "w")
-# create_mysql_struct_from_dict(sql_dict, sql_out)
-# sql_out.close()
+print("Creating Output")
+sql_out = open("output.sql", "w")
+create_mysql_struct_from_dict(sql_dict, sql_out)
+sql_out.close()
 
 
 
