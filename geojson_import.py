@@ -56,6 +56,8 @@ def python_dict_flatten(f_input:dict):
         f_input = output
     return output
 
+# A function that should standardize content
+# TODO: STANDARDIZE IT!!!
 def python_json_standardize(f_input:dict, sample=None):
     if sample is not None:
         if type(sample) is dict:
