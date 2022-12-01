@@ -31,8 +31,9 @@ pip install inquirer
 # Processing - Re-imagined.
 1. Convert goeJSON into python dictionary
 2. Flatten the goeJSON such that any nested dictionaries exist on the first level of the object
-   1. Convert list of lists into lists of dictionaries
-3. Identify structure and log in parser dictionary, appending additional structure for foreign keys
-4. Display structure and prompt user for primary keys
-5. Recursively traverse every list in every dictionary, append each dictionary to a list with a matching key in parser dictionary
-6. Traverse parser dictionary and create tables from {table}_struct keys and Inserts from {table} keys
+3. Check that all lists are uniform, if any data is not, convert all values to a json string. 
+4. Convert list of lists into lists of dictionaries
+5. Identify structure and log in parser dictionary, appending additional structure for foreign keys
+6. Display structure and prompt user for primary keys
+7. Recursively traverse every list in every dictionary, append each dictionary to a list with a matching key in parser dictionary
+8. Traverse parser dictionary and create tables from {table}_struct keys and Inserts from {table} keys
