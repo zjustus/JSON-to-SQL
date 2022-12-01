@@ -210,6 +210,8 @@ def create_mysql_struct_from_dict(sql_dict:dict, sql_file):
 
     # Part 2, create data
     tables = [val for val in sql_dict.keys() if "_struct" not in val]
+
+
     for table in tables:
         print("Inserting values into", table, "table")
 
@@ -231,11 +233,12 @@ def create_mysql_struct_from_dict(sql_dict:dict, sql_file):
             sql_file.write("(")
             for k in row:
                 j += 1
-                sql_file.write(k)
+                sql_file.write(str(row[k]))
                 if j != len(row): sql_file.write(", ")
             if i != len(sql_dict[table]): sql_file.write("),")
             else: sql_file.write(");")
-            sql_file.write("\n\n")
+            sql_file.write("\n")
+        sql_file.write("\n")
 
 
 
